@@ -2,22 +2,29 @@
 -- - [ x ]  % de formas de pagamentos
 -- - [ ]  Quantidade média de parcelas (quando cartão)
 
+WITH tb_pedidos AS (
+    SELECT DISTINCT
+        ped.idPedido,
+        item.idVendedor
 
-WITH tb_join AS (
-    SELECT pag.*,
-           item.idVendedor
-        
     FROM pedido AS ped
 
-    LEFT JOIN pagamento_pedido AS pag
-    ON ped.idPedido = pag.idPedido
-
-    LEFT JOIN item_pedido AS item
+    LEFT JOIN item_pedido as item
     ON ped.idPedido = item.idPedido
 
     WHERE ped.dtPedido < '2018-01-01'
-    AND ped.dtPedido >= strftime('%Y-%m-%d', '2018-01-01', '-6 months')
+    AND dtPedido >= strftime('%Y-%m-%d', '2018-01-01', '-6 months')
     AND item.idVendedor IS NOT NULL
+),
+
+tb_join AS (
+    SELECT ped.idVendedor,
+           pag.*
+        
+    FROM tb_pedidos AS ped
+
+    LEFT JOIN pagamento_pedido AS pag
+    ON ped.idPedido = pag.idPedido
 ),
 
 tb_group AS (
@@ -59,7 +66,6 @@ SELECT
     sum(case when descTipoPagamento='voucher' then vlPedidoMeioPagamento else 0 end) / sum(vlPedidoMeioPagamento) as pct_valor_voucher_pedido,
     sum(case when descTipoPagamento='debit_card' then vlPedidoMeioPagamento else 0 end) / sum(vlPedidoMeioPagamento) as pct_valor_debit_card_pedido
 
-
 FROM tb_group
 
-GROUP BY 1
+GROUP BY idVendedor
